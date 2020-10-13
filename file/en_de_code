@@ -1,0 +1,10 @@
+合上.*压变.*#.*刀.*闸,operateKnifeSwitch//close
+将.*压变.*#.*刀.*闸.*手车.*由.*“.*试验.*”.*位置.*摇至.*“.*工作.*”.*位置,operateHandcartSwitch//testToWork
+拉开.*压变.*#.*开关,operateKnifeSwitch//open
+检查.*压变.*#.*刀.*闸.*手车确.*在.*“.*工作.*”.*位置,checkHandcartSwitchStatus//work
+检查.*压变.*#.*刀.*闸.*三相.*确已.*合上,checkKnifeSwitchStatus//close
+检查.*压变.*#.*刀.*闸.*三相.*确已.*合上,checkKnifeSwitchStatus//close
+检查.*压变.*#.*刀.*闸.*手车确.*在.*“.*试验.*”.*位置,checkHandcartSwitchStatus//test
+将.*压变.*#.*刀.*闸.*手车.*由.*“.*工作.*”.*位置.*摇至.*“.*试验.*”.*位置,operateHandcartSwitch//workToTest
+将.*压变.*#.*刀.*闸.*手车.*由.*“.*工作.*”.*位置.*摇至.*“.*试验.*”.*位置,operateHandcartSwitch//workToTest
+检查.*压变.*#.*开关.*三相.*确在.*分闸.*位置,checkKnifeSwitchStatus//open

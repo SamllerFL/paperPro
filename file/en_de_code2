@@ -1,0 +1,8 @@
+合上压变#刀闸,operateKnifeSwitch//close
+拉开压变#开关,operateKnifeSwitch//open
+将压变#刀闸手车由“试验”位置摇至“工作”位置,operateHandcartSwitch//testToWork
+将压变#刀闸手车由“工作”位置摇至“试验”位置,operateHandcartSwitch//workToTest
+检查压变#刀闸手车确在“工作”位置,checkHandcartSwitchStatus//work
+检查压变#刀闸手车确在“试验”位置,checkHandcartSwitchStatus//test
+检查压变#刀闸三相确已合上,checkKnifeSwitchStatus//close
+检查压变#开关三相确在分闸位置,checkKnifeSwitchStatus//open
