@@ -18,6 +18,8 @@ def preprocess_data():
     seqs_input, seqs_output = [], []  # 输入、输出序列
     counter_input, counter_output = Counter(), Counter()  # 字库
     for seq in seqs:
+        if seq.strip() == '':
+            continue
         inputs, outputs = seq.strip().split(',')
         counter_input += Counter(list(inputs))
         counter_output += Counter(list(outputs))
@@ -165,10 +167,9 @@ class Seq2seq:
         seq = self.seq2seq(x_encoder_pred)
         return seq
 
+
+# seq2seq_model = Seq2seq()
 # while True:
 #     chrs = input('输入：').strip()
-#     x_encoder_pred = [[c2i_input(c) for c in chrs]]
-#     x_encoder_pred = pad_sequences(x_encoder_pred, maxlen_input, padding='post', truncating='post')
-#     x_encoder_pred = to_categorical(x_encoder_pred, num_classes_input)
-#     seq = seq2seq(x_encoder_pred)
+#     seq = seq2seq_model.translate(chrs)
 #     print('输出：%s\n' % seq)

@@ -1,6 +1,6 @@
 """配置"""
-corpus_path = '../file/en_de_code2'
-num_classes_input = 33  # 中文低频字过滤
+corpus_path = '../file/en_de_code3.1'
+num_classes_input = 30  # 中文低频字过滤
 num_classes_output = 30  # 英文低频字过滤
 chr_pad = '-'  # 填充字符
 chr_start = '['  # 起始字符
@@ -18,7 +18,7 @@ units = 100  # LSTM神经元数量
 batchsize = 256
 epochs = 500
 
-prefix = '../model/seq2seqModel2/'  # 保存模型的文件夹
+prefix = '../model/seq2seqModel3/'  # 保存模型的文件夹
 path_hdf5 = prefix + 'model.hdf5'
 path_hdf5_encoder = prefix + 'encoder.hdf5'
 path_hdf5_decoder = prefix + 'decoder.hdf5'

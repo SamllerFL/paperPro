@@ -16,6 +16,7 @@ def load_stopwords(stopwords_file):
     stopwords_list = []
     with open(stopwords_file, 'r', encoding='utf-8') as f:
         for line in f.readlines():
+            jieba.add_word(line.strip())
             stopwords_list.append(line.strip())
     return stopwords_list
 
@@ -45,10 +46,10 @@ def load_corpus(corpus_file, stopwords_file):
         line = f.readline()
         while line:
             old_sentence_list.append(line.strip())
-            code = re.search('[0-9]{3,4}#', line)
-            if code is not None:
-                num_re = re.compile('[0-9]{3,4}#')
-                line = num_re.sub('', line)
+            # code = re.search('[0-9]{3,4}#', line)
+            # if code is not None:
+            #     num_re = re.compile('[0-9]{3,4}#')
+            #     line = num_re.sub('', line)
             word_list = cut_stopwords(line, stopwords_file)
             process_sentence_list.append(''.join(word_list))
             line = f.readline()
@@ -63,7 +64,7 @@ def kmeans_cluster(num_class, text_mat, old_sentence_list):
     :param old_sentence_list: 原文本列表
     :return:
     '''
-    clf = KMeans(n_clusters=num_class, max_iter=50000, init="k-means++", tol=1e-8)
+    clf = KMeans(n_clusters=num_class, max_iter=60000, init="k-means++", tol=1e-8)
     s = clf.fit_predict(text_mat)
     line_cluster = {}
 
@@ -143,29 +144,29 @@ def word2vec_cluster(corpus_file, stopwords_file):
     # plt.show()
 
 
-def doc2vec_cluster(corpus_file, stopwords_file):
+def doc2vec_cluster(corpus_file, stopwords_file, cluster_file):
     '''
     文本聚类
     :param filename: 文本路径, 一行表示一个文本
     :return:
     '''
-    _, cut_sentence_list = load_corpus(corpus_file, stopwords_file)
-    old_sentence_list = []
+    old_sentence_list, cut_sentence_list = load_corpus(corpus_file, stopwords_file)
+    old_cut_sentence_list = []
     x_train = []
     for i, line in enumerate(cut_sentence_list):
-        old_sentence_list.append(' '.join(jieba.cut(line.strip())).split(' '))
+        old_cut_sentence_list.append(' '.join(jieba.cut(line.strip())).split(' '))
         word_list = ' '.join(jieba.cut(line.strip())).split(' ')  # 保证读入的文件是进行分过词的
         document = TaggedDocument(word_list, tags=[i])
         x_train.append(document)
 
     # 训练文本
-    doc2vec_model = Doc2Vec(x_train, min_count=1, window=10, vector_size=120, sample=1e-4, negative=5, workers=8)
+    doc2vec_model = Doc2Vec(x_train, min_count=1, window=15, vector_size=120, sample=1e-4, negative=5, workers=8)
     doc2vec_model.train(x_train, total_examples=doc2vec_model.corpus_count, epochs=120)
-    doc2vec_model.save('../model/doc2vec_model_total')
-    # doc2vec_model = Doc2Vec.load('../model/doc2vec_model_total')
+    doc2vec_model.save('../model/doc2vec_model_total2.1')
+    # doc2vec_model = Doc2Vec.load('../model/doc2vec_model_total2.1')
 
     # 得到文本对应的向量
-    allline_vector = [doc2vec_model.infer_vector(line) for line in old_sentence_list]
+    allline_vector = [doc2vec_model.infer_vector(line) for line in old_cut_sentence_list]
 
     # 降维成2维，方便在图中展示
     # pca = PCA(n_components=2)
@@ -181,26 +182,26 @@ def doc2vec_cluster(corpus_file, stopwords_file):
     #                  xytext=(pca_vector[:, 0][i] + 0.1, pca_vector[:, 1][i] + 0.1))
     # plt.show()
 
-    # json_str = json.dumps(line_cluster)
-    # with open('./file/cluster_file.json', 'w', encoding='utf8') as f:
-    #     f.write(json_str)
+    json_str = json.dumps(line_cluster)
+    with open(cluster_file, 'w', encoding='utf-8') as f:
+        f.write(json_str)
 
 
-def process_cluster(cluster_file):
+def process_cluster(cluster_file, stopwords_file, re_match_file):
     def lcs(str1, str2):
-        dp = [[0]*(len(str2)+1) for i in range(len(str1)+1)]
+        dp = [[0]*(len(str2)+1) for _ in range(len(str1)+1)]
         for i in range(1, len(str1)+1):
             for j in range(1, len(str2)+1):
                 if str1[i-1] == str2[j-1]:
                     dp[i][j] = dp[i-1][j-1] + 1
                 else:
                     dp[i][j] = max(dp[i-1][j], dp[i][j-1])
-        i = len(str1) - 1
-        j = len(str2) - 1
+        i = len(str1)
+        j = len(str2)
         str = ''
-        while i >= 0 and j >= 0:
-            if str1[i] == str2[j]:
-                str = str1[i] + str
+        while i >= 1 and j >= 1:
+            if str1[i-1] == str2[j-1]:
+                str = str1[i-1] + str
                 j = j - 1
                 i = i - 1
             else:
@@ -210,22 +211,47 @@ def process_cluster(cluster_file):
                     i = i - 1
         return str
 
+    def match_ratio(re_str, str_list):
+        count = 0
+        for str in str_list:
+            if re.search(re_str, str) is not None:
+                count += 1
+        return count/len(str_list)
+
     with open(cluster_file, 'r', encoding='utf-8') as f:
         line_cluster = json.loads(f.read())
-    print(line_cluster)
+    # print(line_cluster)
     re_list = []
     str_list = []
     for key in line_cluster:
-        str1 = line_cluster[key][0]
-        str2 = line_cluster[key][5]
-        str3 = line_cluster[key][6]
-        lcs_str = lcs(lcs(str1, str2), str3)
+        # temp_re = temp_str = ''
+        # for i, line in enumerate(line_cluster[key]):
+        #     str1 = cut_stopwords(line, stopwords_file)
+        #     ratio = 0
+        #     for line2 in line_cluster[key][i+1:]:
+        #         str2 = cut_stopwords(line2, stopwords_file)
+        #         lcs_str = lcs(str1, str2)
+        #         re_str = '.*'.join(list(jieba.cut(lcs_str)))
+        #         temp_ratio = match_ratio(re_str, line_cluster[key])
+        #         if temp_ratio > ratio:
+        #             ratio = temp_ratio
+        #             temp_re = re_str
+        #             temp_str = lcs_str
+        # re_list.append(temp_re)
+        # str_list.append(temp_str)
+        print(line_cluster[key])
+        num_re = re.compile('[0-9]{3,4}')
+        str1 = ''.join(cut_stopwords(num_re.sub('', line_cluster[key][0]), stopwords_file))
+        str2 = ''.join(cut_stopwords(num_re.sub('', line_cluster[key][7]), stopwords_file))
+        # str3 = ''.join(cut_stopwords(num_re.sub('', line_cluster[key][0]), stopwords_file))
+        # lcs_str = lcs(lcs(str1, str2), str3)
+        lcs_str = lcs(str1, str2)
         str_list.append(lcs_str)
         re_list.append('.*'.join(list(jieba.cut(lcs_str))))
     print(str_list)
     print(re_list)
 
-    with open('../file/re_match', 'w', encoding='utf-8') as f:
+    with open(re_match_file, 'w', encoding='utf-8') as f:
         for i, temp_re in enumerate(re_list):
             f.write(temp_re+','+str_list[i]+'\n')
 
@@ -242,7 +268,8 @@ def process_cluster(cluster_file):
 
 
 if __name__ == '__main__':
+    load_stopwords('../file/stop_words')
     # word2vec_cluster('../file/corpus.txt')
     # tfidf_cluster('../file/corpus3.txt', '../file/stop_words')
-    doc2vec_cluster('../file/corpus3.txt', '../file/stop_words')
-    # process_cluster('../file/cluster_file2.json')
+    # doc2vec_cluster('../file/corpus3.txt', '../file/stop_words', '../file/cluster_file3.1.json')
+    process_cluster('../file/cluster_file3.1.json', '../file/stop_words', '../file/re_match3.1')

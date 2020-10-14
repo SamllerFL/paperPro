@@ -35,5 +35,5 @@ def read_docx(docx_file, re_match_file, seq2seq_model):
 
 if __name__ == '__main__':
     seq2seq_model = Seq2seq()
-    translate_result = read_docx('../file/1.docx', '../file/re_match', seq2seq_model)
+    translate_result = read_docx('../file/1.docx', '../file/re_match3.1', seq2seq_model)
     print(translate_result)
